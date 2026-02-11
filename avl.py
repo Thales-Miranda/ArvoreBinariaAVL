@@ -1,25 +1,34 @@
-
-from no import NO
-
+from no import No
 
 class AVL:
+
     def __init__(self):
         self.__raiz = None
 
     def __altura(self, no):
         if(no == None):
-            return -1
+            return 0
         else:
             return no.altura
+        
+
+
+
+
+    #Calculo do fator de balanceamento para assegurar eficiência e garantir uma ávore AVL
+    #Importância do sinal para saber para qual lado está desbalanceado +2 -2
 
     def __fatorBalanceamento(self, no):
-        return abs(self.__altura(no.esq) - self.__altura(no.dir))
+        return self.__altura(no.esq) - self.__altura(no.dir)
+    
+    #Rotações para balanceamento e recalculo da altura
 
-    def __maior(self, x, y):
-        if(x > y):
-            return x
+    def __maior(self, A, B):
+
+        if A > B:
+            return A
         else:
-            return y
+            return B
 
     def __RotacaoLL(self, A):
         print('RotacaoLL: ',A.info);
@@ -50,108 +59,137 @@ class AVL:
         A.dir = self.__RotacaoLL(A.dir)
         A = self.__RotacaoRR(A)
         return A
+    
+
+
+
+
+# Inserção da palavra no No
+    def __insereValor(self, atual, valor, linha):
+        # Primeiro No (raiz ou folha alcançada)
+        if atual == None: 
+            novo = No(valor, linha) # Passando valor e linha para o construtor do seu No
+            return novo
+        
+        if valor < atual.palavra: # Usando .palavra conforme seu No
+            atual.esq = self.__insereValor(atual.esq, valor, linha)
+            if self.__fatorBalanceamento(atual) >= 2:
+                if valor < atual.esq.palavra:
+                    atual = self.__RotacaoLL(atual)
+                else:
+                    atual = self.__RotacaoLR(atual)
+
+        elif valor > atual.palavra:
+            atual.dir = self.__insereValor(atual.dir, valor, linha)
+            if self.__fatorBalanceamento(atual) <= -2:
+                if valor > atual.dir.palavra:
+                    atual = self.__RotacaoRR(atual)
+                else:
+                    atual = self.__RotacaoRL(atual)
+        
+        else:
+            # Caso a palavra já exista (valor == atual.palavra)
+            # Regra do enunciado: linha aparece apenas uma vez no índice
+            if linha not in atual.linhas:
+                atual.linhas.append(linha)
+
+        atual.altura = self.__maior(self.__altura(atual.esq), self.__altura(atual.dir)) + 1
+        return atual
+
+    def insere(self, valor, linha):
+        # Para o índice remissivo, não retornamos False se existir.
+        # Nós sempre chamamos o __insereValor para atualizar a lista de linhas.
+        self.__raiz = self.__insereValor(self.__raiz, valor, linha)
+
+
+
+#Busca da Palavra (no.palavra)
 
     def busca(self, valor):
         if(self.__raiz == None):
-            return False
+            return None
 
         atual = self.__raiz
         while(atual != None):
             if(valor == atual.info):
-                return True
+                return atual
+            #Mostra informação do no (palavra e lista)
 
             if(valor > atual.info):
                 atual = atual.dir
             else:
                 atual = atual.esq
 
-        return False
+        return None
+    
 
-    def __insereValor(self,atual,valor):
-        if(atual == None): # árvore vazia ou nó folha
-            novo = NO(valor)
-            return novo
-        else:
-            if(valor < atual.info):
-                atual.esq = self.__insereValor(atual.esq, valor)
-                if(self.__fatorBalanceamento(atual) >= 2):
-                    if(valor < atual.esq.info):
-                        atual = self.__RotacaoLL(atual)
-                    else:
-                        atual = self.__RotacaoLR(atual)
-            else:
-                atual.dir = self.__insereValor(atual.dir, valor)
-                if(self.__fatorBalanceamento(atual) >= 2):
-                    if(valor > atual.dir.info):
-                        atual = self.__RotacaoRR(atual)
-                    else:
-                        atual = self.__RotacaoRL(atual)
 
-            atual.altura = self.__maior(self.__altura(atual.esq),self.__altura(atual.dir)) + 1
-            return atual
 
-    def insere(self, valor):
-        if(self.busca(valor)):
-            return False #valor já existe na árvore
-        else:
-            self.__raiz = self.__insereValor(self.__raiz, valor)
-            return True
+
+#Remoção do No
 
     def __procuraMenor(self, atual):
-        no1 = atual
-        no2 = atual.esq
-        while(no2 != None):
-            no1 = no2
-            no2 = no2.esq
-        return no1
+        no = atual
+        while no.esq is not None:
+            no = no.esq
+        return no
 
     def __removeValor(self, atual, valor):
-        if(atual.info == valor): #achou o nó a ser removido
-            if(atual.esq == None or atual.dir == None): # nó tem 1 filho ou nenhum
-                if(atual.esq != None):
-                    atual = atual.esq
-                else:
-                    atual = atual.dir
 
-            else: # nó tem 2 filhos
-                temp = self.__procuraMenor(atual.dir)
-                atual.info = temp.info
-                atual.dir = self.__removeValor(atual.dir, atual.info)
-                if(self.__fatorBalanceamento(atual) >= 2):
-                    if(self.__altura(atual.esq.dir) <= self.__altura(atual.esq.esq)):
-                        atual = self.__RotacaoLL(atual)
-                    else:
-                        atual = self.__RotacaoLR(atual)
+        if atual == None:
+            return None
 
-            if(atual != None):
-                atual.altura = self.__maior(self.__altura(atual.esq),self.__altura(atual.dir)) + 1
+        #Procurar o nó
+        if valor < atual.info:
+            atual.esq = self.__removeValor(atual.esq, valor)
 
-        else:# procura o nó a ser removido
-            if(valor < atual.info):
-                atual.esq = self.__removeValor(atual.esq, valor)
-                if(self.__fatorBalanceamento(atual) >= 2):
-                    if(self.__altura(atual.dir.esq) <= self.__altura(atual.dir.dir)):
-                        atual = self.__RotacaoRR(atual)
-                    else:
-                        atual = self.__RotacaoRL(atual)
+        elif valor > atual.info:
+            atual.dir = self.__removeValor(atual.dir, valor)
+
+        else:
+        #Nó encontrado
+
+        # Caso 1 filho ou nenhum
+            if atual.esq == None:
+                return atual.dir
+            elif atual.dir == None:
+                return atual.esq
+
+        # Caso 2 filhos
+            temp = self.__procuraMenor(atual.dir)
+            atual.info = temp.info
+            atual.dir = self.__removeValor(atual.dir, temp.info)
+
+    #Atualiza altura
+        atual.altura = self.__maior(
+        self.__altura(atual.esq),
+        self.__altura(atual.dir)
+    ) + 1
+
+    #Balanceamento
+        fb = self.__fatorBalanceamento(atual)
+
+    # Pesado esquerda
+        if fb >= 2:
+            if self.__altura(atual.esq.esq) >= self.__altura(atual.esq.dir):
+                return self.__RotacaoLL(atual)
             else:
-                atual.dir = self.__removeValor(atual.dir, valor)
-                if(self.__fatorBalanceamento(atual) >= 2):
-                    if(self.__altura(atual.esq.dir) <= self.__altura(atual.esq.esq)):
-                        atual = self.__RotacaoLL(atual)
-                    else:
-                        atual = self.__RotacaoLR(atual)
+                return self.__RotacaoLR(atual)
 
-            atual.altura = self.__maior(self.__altura(atual.esq),self.__altura(atual.dir)) + 1
+    # Pesado direita
+        if fb <= -2:
+            if self.__altura(atual.dir.dir) >= self.__altura(atual.dir.esq):
+                return self.__RotacaoRR(atual)
+            else:
+                return self.__RotacaoRL(atual)
 
         return atual
 
-    def remove(self, valor):
-        if(self.__raiz == None or not self.busca(valor)):
-            return False #árvore vazia ou valor não existe na árvore
-        else:
-            self.__raiz = self.__removeValor(self.__raiz, valor)
-            return True
+
+
+
+
+#Ordem Alfabética
 
     def __emOrdem(self,raiz):
         if(raiz != None):
@@ -162,3 +200,29 @@ class AVL:
     def emOrdem(self):
         if(self.__raiz != None):
             self.__emOrdem(self.__raiz)
+
+
+#Palavra mais frequente
+
+    def palavra_mais_frequente(self):
+        self.max_freq = 0
+        self.palavra_mais_frequente = ""
+
+        def percorrer(no):
+            if no:
+                percorrer(no.esq)
+                freq_atual = len(no.linhas)
+                if freq_atual > self.max_freq:
+                    self.max_freq = freq_atual
+                    self.palavra_mais_frequente = no.palavra
+                percorrer(no.dir)
+
+        percorrer(self.__raiz)
+        return self.palavra_mais_frequente, self.max_freq
+
+
+
+
+
+
+

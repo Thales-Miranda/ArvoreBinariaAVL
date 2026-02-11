@@ -32,4 +32,3 @@ while (linha != "#FIM"):
 
 
 
-
